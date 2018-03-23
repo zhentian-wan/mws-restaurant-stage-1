@@ -16,7 +16,7 @@ const gConfig = require('./gulp.config.js');
 
 //Default task
 gulp.task('default', function (callback) {
-    runSequence('start', ['lint', 'watch'], callback);
+    runSequence('start', [ 'watch'], callback);
 });
 
 gulp.task('start', function (callback) {
@@ -129,8 +129,8 @@ gulp.task('copy-data', function () {
 
 gulp.task('watch', function () {
     gulp.watch(gConfig.app_file.scss_src, ['styles']);
-    gulp.watch(gConfig.app_file.js_main_src, ['lint']);
-    gulp.watch(gConfig.app_file.js_restaurant_src, ['lint']);
+    gulp.watch(gConfig.app_file.js_main_src, ['scripts:main']);
+    gulp.watch(gConfig.app_file.js_restaurant_src, ['scripts:restaurant']);
     gulp.watch(gConfig.app_file.html_src, ['copy-html']);
     gulp.watch(gConfig.app_file.img_src, ['copy-imgs']);
 });

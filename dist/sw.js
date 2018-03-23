@@ -1,4 +1,4 @@
-const CACHE_VERSION = "restaurant_app_v10";
+const CACHE_VERSION = "restaurant_app_v11";
 
 self.addEventListener("install", event => {
   const urlsToCache = [
@@ -10,7 +10,6 @@ self.addEventListener("install", event => {
     "css/over640.css",
     "css/over1024.css",
     "css/styles.css",
-    "data/restaurants.json",
     "https://necolas.github.io/normalize.css/8.0.0/normalize.css"
   ];
 
