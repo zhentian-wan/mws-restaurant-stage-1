@@ -31,9 +31,9 @@ gulp.task('clean', function (callback) {
     return del([gConfig.build.dir], {force: true}, callback);
 });
 
-gulp.task('copy-start', ['styles', 'copy-html', 'scripts:main', 'scripts:restaurant', 'scripts-sw', 'copy-data']);
+gulp.task('copy-start', ['styles', 'copy-html', 'copy-imgs', 'scripts:main', 'scripts:restaurant', 'scripts-sw']);
 
-gulp.task('copy-build', ['styles', 'copy-html', 'copy-imgs', 'scripts-dist:main', 'scripts-dist:restaurant', 'scripts-sw', 'copy-data']);
+gulp.task('copy-build', ['styles', 'copy-html', 'copy-imgs', 'scripts-dist:main', 'scripts-dist:restaurant', 'scripts-sw']);
 
 gulp.task('styles', function () {
     gulp.src(gConfig.app_file.scss_src)
@@ -111,7 +111,7 @@ gulp.task('scripts-dist:restaurant', function () {
 });
 
 gulp.task('scripts-sw', function () {
-    gulp.src('./sw.js')
+    gulp.src(gConfig.app_file.sw_src)
         .pipe(gulp.dest(gConfig.build.dir));
 });
 
@@ -122,13 +122,10 @@ gulp.task('copy-html', function () {
 
 gulp.task('copy-imgs', shell.task('grunt'));
 
-gulp.task('copy-data', function () {
-    gulp.src(gConfig.app_file.data_src)
-        .pipe(gulp.dest(gConfig.build.build_data))
-});
 
 gulp.task('watch', function () {
     gulp.watch(gConfig.app_file.scss_src, ['styles']);
+    gulp.watch(gConfig.app_file.sw_src, ['scripts-sw']);
     gulp.watch(gConfig.app_file.js_main_src, ['scripts:main']);
     gulp.watch(gConfig.app_file.js_restaurant_src, ['scripts:restaurant']);
     gulp.watch(gConfig.app_file.html_src, ['copy-html']);

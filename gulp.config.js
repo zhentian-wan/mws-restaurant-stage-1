@@ -12,7 +12,7 @@ module.exports = {
         index_src: './img_src',
         html_src: './*.html',
         img_src: './img_src/*.jpg',
-        data_src: './data/**/*.json',
+        sw_src: './sw.js',
     },
     build: {
         dir: './dist',
@@ -20,6 +20,6 @@ module.exports = {
         build_html: './dist',
         build_img: './dist/img',
         build_js: './dist/js',
-        build_data: './dist/data'
+        build_data: './dist/data',
     },
 };
