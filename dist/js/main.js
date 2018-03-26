@@ -1,2 +1,499 @@
-"use strict";window.addEventListener("load",function(){"serviceWorker"in navigator?navigator.serviceWorker.register("/sw.js").then(function(e){console.log("Service worker registration succeeded:",e)}).catch(function(e){console.log("Service worker registration failed:",e)}):console.log("Service workers are not supported.")});var restaurants=void 0,neighborhoods=void 0,cuisines=void 0,map=void 0,markers=[];document.addEventListener("DOMContentLoaded",function(){fetchNeighborhoods(),fetchCuisines(),console.log("document.activeElement",document.activeElement)});var fetchNeighborhoods=function(){DBHelper.fetchNeighborhoods(function(e,n){e?console.error(e):(self.neighborhoods=n,fillNeighborhoodsHTML())})},fillNeighborhoodsHTML=function(){var e=0<arguments.length&&void 0!==arguments[0]?arguments[0]:self.neighborhoods,t=document.getElementById("neighborhoods-select");e.forEach(function(e){var n=document.createElement("option");n.innerHTML=e,n.value=e,n.name=e,t.append(n)})},fetchCuisines=function(){DBHelper.fetchCuisines(function(e,n){e?console.error(e):(self.cuisines=n,fillCuisinesHTML())})},fillCuisinesHTML=function(){var e=0<arguments.length&&void 0!==arguments[0]?arguments[0]:self.cuisines,t=document.getElementById("cuisines-select");e.forEach(function(e){var n=document.createElement("option");n.innerHTML=e,n.value=e,t.append(n)})};window.initMap=function(){self.map=new google.maps.Map(document.getElementById("map"),{zoom:12,center:{lat:40.722216,lng:-73.987501},scrollwheel:!1,keyboardShortcuts:!1}),updateRestaurants()};var updateRestaurants=function(){var e=document.getElementById("cuisines-select"),n=document.getElementById("neighborhoods-select"),t=e.selectedIndex,r=n.selectedIndex,a=e[t].value,o=n[r].value;DBHelper.fetchRestaurantByCuisineAndNeighborhood(a,o,function(e,n){e?console.error(e):(resetRestaurants(n),fillRestaurantsHTML())})},resetRestaurants=function(e){self.restaurants=[],document.getElementById("restaurants-list").innerHTML="",self.markers.forEach(function(e){return e.setMap(null)}),self.markers=[],self.restaurants=e},fillRestaurantsHTML=function(){var e=0<arguments.length&&void 0!==arguments[0]?arguments[0]:self.restaurants,n=document.getElementById("restaurants-list");e.forEach(function(e){n.append(createRestaurantHTML(e))}),addMarkersToMap()},createRestaurantHTML=function(e){var n=document.createElement("li"),t=document.createElement("img");t.className="restaurant-img",t.src=DBHelper.imageUrlForRestaurant(e),t.alt="Restaurant "+e.name,n.append(t);var r=document.createElement("div");r.className="restaurant-info";var a=document.createElement("h3");a.innerHTML=e.name,a.id="restaurant-item-"+e.id,r.append(a);var o=document.createElement("p");o.innerHTML=e.neighborhood,r.append(o);var i=document.createElement("p");i.innerHTML=e.address,r.append(i);var u=document.createElement("a");u.innerHTML="View Details",u.href=DBHelper.urlForRestaurant(e),u.setAttribute("aria-labelledby","restaurant-detail-"+e.id),r.append(u);var s=document.createElement("span");return s.hidden=!0,s.id="restaurant-detail-"+e.id,s.innerHTML="Restaurant name: "+e.name+", address:"+e.address+", click the link to view detail",n.appendChild(s),n.append(r),n},addMarkersToMap=function(){(0<arguments.length&&void 0!==arguments[0]?arguments[0]:self.restaurants).forEach(function(e){var n=DBHelper.mapMarkerForRestaurant(e,self.map);google.maps.event.addListener(n,"click",function(){window.location.href=n.url}),self.markers.push(n)})},_slicedToArray=function(e,n){if(Array.isArray(e))return e;if(Symbol.iterator in Object(e))return function(e,n){var t=[],r=!0,a=!1,o=void 0;try{for(var i,u=e[Symbol.iterator]();!(r=(i=u.next()).done)&&(t.push(i.value),!n||t.length!==n);r=!0);}catch(e){a=!0,o=e}finally{try{!r&&u.return&&u.return()}finally{if(a)throw o}}return t}(e,n);throw new TypeError("Invalid attempt to destructure non-iterable instance")},_createClass=function(){function r(e,n){for(var t=0;t<n.length;t++){var r=n[t];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(e,r.key,r)}}return function(e,n,t){return n&&r(e.prototype,n),t&&r(e,t),e}}();function _classCallCheck(e,n){if(!(e instanceof n))throw new TypeError("Cannot call a class as a function")}function formatSingleRestaurantData(e){return Object.assign({},e,{photograph:e.photograph?e.photograph+".jpg":e.id+".jpg"})}function formatRestaurantsData(e){return e.map(formatSingleRestaurantData)}var DBHelper=function(){function t(){_classCallCheck(this,t)}return _createClass(t,null,[{key:"fetchRestaurants",value:function(n){fetch(t.DATABASE_URL).then(function(e){return e.json()}).then(formatRestaurantsData).then(function(e){return n(null,e)}).catch(function(e){return n(e,null)})}},{key:"fetchRestaurantById",value:function(e,n){fetch(t.DATABASE_URL+"/"+e).then(function(e){return e.json()}).then(formatSingleRestaurantData).then(function(e){e?n(null,e):n("Restaurant does not exist",null)}).catch(function(e){return n(e,null)})}},{key:"fetchRestaurantByCuisine",value:function(r,a){t.fetchRestaurants(function(e,n){if(e)a(e,null);else{var t=n.filter(function(e){return e.cuisine_type==r});a(null,t)}})}},{key:"fetchRestaurantByNeighborhood",value:function(r,a){t.fetchRestaurants(function(e,n){if(e)a(e,null);else{var t=n.filter(function(e){return e.neighborhood==r});a(null,t)}})}},{key:"fetchRestaurantByCuisineAndNeighborhood",value:function(r,a,o){t.fetchRestaurants(function(e,n){if(e)o(e,null);else{var t=n;"all"!=r&&(t=t.filter(function(e){return e.cuisine_type==r})),"all"!=a&&(t=t.filter(function(e){return e.neighborhood==a})),o(null,t)}})}},{key:"fetchNeighborhoods",value:function(a){t.fetchRestaurants(function(e,t){if(e)a(e,null);else{var r=t.map(function(e,n){return t[n].neighborhood}),n=r.filter(function(e,n){return r.indexOf(e)==n});a(null,n)}})}},{key:"fetchCuisines",value:function(a){t.fetchRestaurants(function(e,t){if(e)a(e,null);else{var r=t.map(function(e,n){return t[n].cuisine_type}),n=r.filter(function(e,n){return r.indexOf(e)==n});a(null,n)}})}},{key:"urlForRestaurant",value:function(e){return"./restaurant.html?id="+e.id}},{key:"imageUrlForRestaurant",value:function(e){var n=e.photograph.split("."),t=_slicedToArray(n,2);return"/img/"+t[0]+"-320_small."+t[1]}},{key:"imageSrcset",value:function(e){var n=e.photograph.split("."),t=_slicedToArray(n,2),r=t[0],a=t[1];return"/img/"+r+"-320_small."+a+" 400w, /img/"+r+"-640_medium."+a+" 640w, /img/"+r+"-800_large."+a+" 800w "}},{key:"mapMarkerForRestaurant",value:function(e,n){return new google.maps.Marker({position:e.latlng,title:e.name,url:t.urlForRestaurant(e),map:n,animation:google.maps.Animation.DROP})}},{key:"DATABASE_URL",get:function(){return"http://localhost:1337/restaurants"}}]),t}();
-//# sourceMappingURL=main.js.map
+'use strict';
+
+(function () {
+    window.addEventListener('load', function () {
+        if ('serviceWorker' in navigator) {
+            // Register a service worker hosted at the root of the
+            // site using the default scope.
+            navigator.serviceWorker.register('/sw.js').then(function (registration) {
+                console.log('Service worker registration succeeded:', registration);
+            }).catch(function (error) {
+                console.log('Service worker registration failed:', error);
+            });
+        } else {
+            console.log('Service workers are not supported.');
+        }
+    });
+})();
+
+var restaurants = void 0,
+    // eslint-disable-line no-unused-vars
+neighborhoods = void 0,
+    // eslint-disable-line no-unused-vars
+cuisines = void 0; // eslint-disable-line no-unused-vars
+var map = void 0; // eslint-disable-line no-unused-vars
+var markers = []; // eslint-disable-line no-unused-vars
+/**
+ * Fetch neighborhoods and cuisines as soon as the page is loaded.
+ */
+document.addEventListener('DOMContentLoaded', function () {
+    fetchNeighborhoods();
+    fetchCuisines();
+
+    console.log("document.activeElement", document.activeElement);
+});
+
+/**
+ * Fetch all neighborhoods and set their HTML.
+ */
+var fetchNeighborhoods = function fetchNeighborhoods() {
+    DBHelper.fetchNeighborhoods(function (error, neighborhoods) {
+        if (error) {
+            // Got an error
+            console.error(error);
+        } else {
+            self.neighborhoods = neighborhoods;
+            fillNeighborhoodsHTML();
+        }
+    });
+};
+
+/**
+ * Set neighborhoods HTML.
+ */
+var fillNeighborhoodsHTML = function fillNeighborhoodsHTML() {
+    var neighborhoods = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : self.neighborhoods;
+
+    var select = document.getElementById('neighborhoods-select');
+    neighborhoods.forEach(function (neighborhood) {
+        var option = document.createElement('option');
+        option.innerHTML = neighborhood;
+        option.value = neighborhood;
+        option.name = neighborhood;
+        select.append(option);
+    });
+};
+
+/**
+ * Fetch all cuisines and set their HTML.
+ */
+var fetchCuisines = function fetchCuisines() {
+    DBHelper.fetchCuisines(function (error, cuisines) {
+        if (error) {
+            // Got an error!
+            console.error(error);
+        } else {
+            self.cuisines = cuisines;
+            fillCuisinesHTML();
+        }
+    });
+};
+
+/**
+ * Set cuisines HTML.
+ */
+var fillCuisinesHTML = function fillCuisinesHTML() {
+    var cuisines = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : self.cuisines;
+
+    var select = document.getElementById('cuisines-select');
+
+    cuisines.forEach(function (cuisine) {
+        var option = document.createElement('option');
+        option.innerHTML = cuisine;
+        option.value = cuisine;
+        select.append(option);
+    });
+};
+
+/**
+ * Initialize Google map, called from HTML.
+ */
+window.initMap = function () {
+    var loc = {
+        lat: 40.722216,
+        lng: -73.987501
+    };
+    self.map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 12,
+        center: loc,
+        scrollwheel: false,
+        keyboardShortcuts: false
+    });
+    updateRestaurants();
+};
+
+/**
+ * Update page and map for current restaurants.
+ */
+var updateRestaurants = function updateRestaurants() {
+    var cSelect = document.getElementById('cuisines-select');
+    var nSelect = document.getElementById('neighborhoods-select');
+
+    var cIndex = cSelect.selectedIndex;
+    var nIndex = nSelect.selectedIndex;
+
+    var cuisine = cSelect[cIndex].value;
+    var neighborhood = nSelect[nIndex].value;
+
+    DBHelper.fetchRestaurantByCuisineAndNeighborhood(cuisine, neighborhood, function (error, restaurants) {
+        if (error) {
+            // Got an error!
+            console.error(error);
+        } else {
+            resetRestaurants(restaurants);
+            fillRestaurantsHTML();
+        }
+    });
+};
+
+/**
+ * Clear current restaurants, their HTML and remove their map markers.
+ */
+var resetRestaurants = function resetRestaurants(restaurants) {
+    // Remove all restaurants
+    self.restaurants = [];
+    var ul = document.getElementById('restaurants-list');
+    ul.innerHTML = '';
+    // Remove all map markers
+    self.markers.forEach(function (m) {
+        return m.setMap(null);
+    });
+    self.markers = [];
+    self.restaurants = restaurants;
+};
+
+/**
+ * Create all restaurants HTML and add them to the webpage.
+ */
+var fillRestaurantsHTML = function fillRestaurantsHTML() {
+    var restaurants = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : self.restaurants;
+
+    var ul = document.getElementById('restaurants-list');
+    restaurants.forEach(function (restaurant) {
+        ul.append(createRestaurantHTML(restaurant));
+    });
+    addMarkersToMap();
+};
+
+/**
+ * Create restaurant HTML.
+ */
+var createRestaurantHTML = function createRestaurantHTML(restaurant) {
+    var li = document.createElement('li');
+
+    var image = document.createElement('img');
+    image.className = 'restaurant-img';
+    image.src = DBHelper.imageUrlForRestaurant(restaurant);
+    image.alt = 'Restaurant ' + restaurant.name;
+    li.append(image);
+
+    var info = document.createElement('div');
+    info.className = 'restaurant-info';
+
+    var name = document.createElement('h3');
+    name.innerHTML = restaurant.name;
+    name.id = 'restaurant-item-' + restaurant.id;
+    info.append(name);
+
+    var neighborhood = document.createElement('p');
+    neighborhood.innerHTML = restaurant.neighborhood;
+    info.append(neighborhood);
+
+    var address = document.createElement('p');
+    address.innerHTML = restaurant.address;
+    info.append(address);
+
+    var more = document.createElement('a');
+    more.innerHTML = 'View Details';
+    more.href = DBHelper.urlForRestaurant(restaurant);
+    more.setAttribute('aria-labelledby', 'restaurant-detail-' + restaurant.id);
+    info.append(more);
+
+    var detail = document.createElement('span');
+    detail.hidden = true;
+    detail.id = 'restaurant-detail-' + restaurant.id;
+    detail.innerHTML = 'Restaurant name: ' + restaurant.name + ', address:' + restaurant.address + ', click the link to view detail';
+
+    li.appendChild(detail);
+    li.append(info);
+
+    return li;
+};
+
+/**
+ * Add markers for current restaurants to the map.
+ */
+var addMarkersToMap = function addMarkersToMap() {
+    var restaurants = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : self.restaurants;
+
+    restaurants.forEach(function (restaurant) {
+        // Add marker to the map
+        var marker = DBHelper.mapMarkerForRestaurant(restaurant, self.map);
+        google.maps.event.addListener(marker, 'click', function () {
+            window.location.href = marker.url;
+        });
+        self.markers.push(marker);
+    });
+};
+'use strict';
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * photograph no longer return 1.jpg
+     in api returns 1, so format data here
+     also the last one doesn't have, using id to replace
+ * @param r
+ * @returns {{} & any & {photograph: string}}
+ */
+function formatSingleRestaurantData(r) {
+    return Object.assign({}, r, {
+        photograph: r.photograph ? r.photograph + '.jpg' : r.id + '.jpg'
+    });
+}
+
+/**
+ * Format restaurants array data
+ * @param restaurants
+ */
+function formatRestaurantsData(restaurants) {
+    return restaurants.map(formatSingleRestaurantData);
+}
+
+/**
+ * Common database helper functions.
+ */
+
+var DBHelper = function () {
+    function DBHelper() {
+        _classCallCheck(this, DBHelper);
+    }
+
+    _createClass(DBHelper, null, [{
+        key: 'fetchRestaurants',
+
+
+        /**
+         * Fetch all restaurants.
+         */
+        value: function fetchRestaurants(callback) {
+            fetch(DBHelper.DATABASE_URL).then(function (res) {
+                return res.json();
+            }).then(formatRestaurantsData).then(function (restaurants) {
+                return callback(null, restaurants);
+            }).catch(function (error) {
+                return callback(error, null);
+            });
+        }
+
+        /**
+         * Fetch a restaurant by its ID.
+         */
+
+    }, {
+        key: 'fetchRestaurantById',
+        value: function fetchRestaurantById(id, callback) {
+
+            fetch(DBHelper.DATABASE_URL + '/' + id).then(function (res) {
+                return res.json();
+            }).then(formatSingleRestaurantData).then(function (restaurant) {
+                if (restaurant) {
+                    // Got the restaurant
+                    callback(null, restaurant);
+                } else {
+                    // Restaurant does not exist in the database
+                    callback('Restaurant does not exist', null);
+                }
+            }).catch(function (error) {
+                return callback(error, null);
+            });
+        }
+
+        /**
+         * Fetch restaurants by a cuisine type with proper error handling.
+         */
+
+    }, {
+        key: 'fetchRestaurantByCuisine',
+        value: function fetchRestaurantByCuisine(cuisine, callback) {
+            // Fetch all restaurants  with proper error handling
+            DBHelper.fetchRestaurants(function (error, restaurants) {
+                if (error) {
+                    callback(error, null);
+                } else {
+                    // Filter restaurants to have only given cuisine type
+                    var results = restaurants.filter(function (r) {
+                        return r.cuisine_type == cuisine;
+                    });
+                    callback(null, results);
+                }
+            });
+        }
+
+        /**
+         * Fetch restaurants by a neighborhood with proper error handling.
+         */
+
+    }, {
+        key: 'fetchRestaurantByNeighborhood',
+        value: function fetchRestaurantByNeighborhood(neighborhood, callback) {
+            // Fetch all restaurants
+            DBHelper.fetchRestaurants(function (error, restaurants) {
+                if (error) {
+                    callback(error, null);
+                } else {
+                    // Filter restaurants to have only given neighborhood
+                    var results = restaurants.filter(function (r) {
+                        return r.neighborhood == neighborhood;
+                    });
+                    callback(null, results);
+                }
+            });
+        }
+
+        /**
+         * Fetch restaurants by a cuisine and a neighborhood with proper error handling.
+         */
+
+    }, {
+        key: 'fetchRestaurantByCuisineAndNeighborhood',
+        value: function fetchRestaurantByCuisineAndNeighborhood(cuisine, neighborhood, callback) {
+            // Fetch all restaurants
+            DBHelper.fetchRestaurants(function (error, restaurants) {
+                if (error) {
+                    callback(error, null);
+                } else {
+                    var results = restaurants;
+                    if (cuisine != 'all') {
+                        // filter by cuisine
+                        results = results.filter(function (r) {
+                            return r.cuisine_type == cuisine;
+                        });
+                    }
+                    if (neighborhood != 'all') {
+                        // filter by neighborhood
+                        results = results.filter(function (r) {
+                            return r.neighborhood == neighborhood;
+                        });
+                    }
+                    callback(null, results);
+                }
+            });
+        }
+
+        /**
+         * Fetch all neighborhoods with proper error handling.
+         */
+
+    }, {
+        key: 'fetchNeighborhoods',
+        value: function fetchNeighborhoods(callback) {
+            // Fetch all restaurants
+            DBHelper.fetchRestaurants(function (error, restaurants) {
+                if (error) {
+                    callback(error, null);
+                } else {
+                    // Get all neighborhoods from all restaurants
+                    var neighborhoods = restaurants.map(function (v, i) {
+                        return restaurants[i].neighborhood;
+                    });
+                    // Remove duplicates from neighborhoods
+                    var uniqueNeighborhoods = neighborhoods.filter(function (v, i) {
+                        return neighborhoods.indexOf(v) == i;
+                    });
+                    callback(null, uniqueNeighborhoods);
+                }
+            });
+        }
+
+        /**
+         * Fetch all cuisines with proper error handling.
+         */
+
+    }, {
+        key: 'fetchCuisines',
+        value: function fetchCuisines(callback) {
+            // Fetch all restaurants
+            DBHelper.fetchRestaurants(function (error, restaurants) {
+                if (error) {
+                    callback(error, null);
+                } else {
+                    // Get all cuisines from all restaurants
+                    var cuisines = restaurants.map(function (v, i) {
+                        return restaurants[i].cuisine_type;
+                    });
+                    // Remove duplicates from cuisines
+                    var uniqueCuisines = cuisines.filter(function (v, i) {
+                        return cuisines.indexOf(v) == i;
+                    });
+                    callback(null, uniqueCuisines);
+                }
+            });
+        }
+
+        /**
+         * Restaurant page URL.
+         */
+
+    }, {
+        key: 'urlForRestaurant',
+        value: function urlForRestaurant(restaurant) {
+            return './restaurant.html?id=' + restaurant.id;
+        }
+
+        /**
+         * Restaurant image URL.
+         */
+
+    }, {
+        key: 'imageUrlForRestaurant',
+        value: function imageUrlForRestaurant(restaurant) {
+            var _restaurant$photograp = restaurant.photograph.split('.'),
+                _restaurant$photograp2 = _slicedToArray(_restaurant$photograp, 2),
+                name = _restaurant$photograp2[0],
+                ext = _restaurant$photograp2[1];
+
+            return '/img/' + name + '-320_small.' + ext;
+        }
+
+        /**
+         * Generate name of different size of images
+         */
+
+    }, {
+        key: 'imageSrcset',
+        value: function imageSrcset(restaurant) {
+            var _restaurant$photograp3 = restaurant.photograph.split('.'),
+                _restaurant$photograp4 = _slicedToArray(_restaurant$photograp3, 2),
+                name = _restaurant$photograp4[0],
+                ext = _restaurant$photograp4[1];
+
+            return '/img/' + name + '-320_small.' + ext + ' 400w, /img/' + name + '-640_medium.' + ext + ' 640w, /img/' + name + '-800_large.' + ext + ' 800w ';
+        }
+
+        /**
+         * Map marker for a restaurant.
+         */
+
+    }, {
+        key: 'mapMarkerForRestaurant',
+        value: function mapMarkerForRestaurant(restaurant, map) {
+            var marker = new google.maps.Marker({
+                position: restaurant.latlng,
+                title: restaurant.name,
+                url: DBHelper.urlForRestaurant(restaurant),
+                map: map,
+                animation: google.maps.Animation.DROP
+            });
+            return marker;
+        }
+    }, {
+        key: 'DATABASE_URL',
+        // eslint-disable-line no-unused-vars
+
+        /**
+         * Database URL.
+         * Change this to restaurants.json file location on your server.
+         */
+        get: function get() {
+            var port = 1337; // Change this to your server port
+            return 'http://localhost:' + port + '/restaurants';
+        }
+    }]);
+
+    return DBHelper;
+}();
