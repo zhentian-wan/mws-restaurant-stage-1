@@ -1,10 +1,11 @@
-const CACHE_VERSION = "restaurant_app_v11";
+const CACHE_VERSION = "restaurant_app_v19";
 
 self.addEventListener("install", event => {
   const urlsToCache = [
     "/",
     "index.html",
     "restaurant.html",
+    "offline.html",
     "js/main.js",
     "js/restaurant_info.js",
     "css/over640.css",
@@ -27,16 +28,20 @@ self.addEventListener("install", event => {
 });
 
 self.addEventListener("fetch", function(event) {
-  event.respondWith(
-    // Fetch the static assets
-    caches.match(event.request).then(response => {
-      if (response) {
-        return response;
-      } else {
-        return fetch(event.request);
-      }
-    })
-  );
+    event.respondWith(
+        // Fetch the static assets
+        caches.match(event.request).then(response => {
+            if (response) {
+                return response;
+            } else {
+                return fetch(event.request)
+                    .catch(() => {
+                        // If cannot fetch
+                        return caches.match('./offline.html');
+                    });
+            }
+        })
+    );
 });
 
 self.addEventListener("activate", event => {
