@@ -26,9 +26,7 @@
 }
 
 @mixin display-flex {
-  @each $prefix in -webkit-, '' {
-    display: #{$prefix}flex;
-  }
+  display: flex;
 }
 
 $accent-color: #FF4081;
