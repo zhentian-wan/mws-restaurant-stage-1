@@ -1,7 +1,134 @@
+let DBPromise;
+
+(() => {
+    const dbPromise = idb.open('restuarant_app_db', 4, function (db) {
+        switch (db.oldVersion) {
+            case 0: {
+                const keyvalStore = db.createObjectStore('keyval');
+                keyvalStore.put("value is value", "key");
+            }
+
+            // name is the primary key
+            case 1: {
+                db.createObjectStore('people', {keyPath: 'name'});
+            }
+
+            // create index 'favoriteAnimal'
+            case 2: {
+                const peopleStore = db.transaction.objectStore('people');
+                peopleStore.createIndex('animal', 'favoriteAnimal'); // named index as 'animal'
+            }
+
+            case 3: {
+                const peopleStore = db.transaction.objectStore('people');
+                peopleStore.createIndex('age', 'age');
+            }
+
+        }
+    });
+
+    dbPromise.then(db => {
+        const tx = db.transaction('people', 'readwrite');
+        const peopleStore = tx.objectStore('people');
+        peopleStore.put({
+            name: 'Sam Munoz',
+            age: 25,
+            favoriteAnimal: 'dog'
+        });
+
+        peopleStore.put({
+            name: 'Wam ok',
+            age: 34,
+            favoriteAnimal: 'cat'
+        });
+
+        peopleStore.put({
+            name: 'Kim Bad',
+            age: 35,
+            favoriteAnimal: 'dog'
+        });
+
+        peopleStore.put({
+            name: 'Jam Good',
+            age: 21,
+            favoriteAnimal: 'dog'
+        });
+
+        return tx.complete;
+    });
+
+    dbPromise.then(db => {
+        const tx = db.transaction('people');
+        const peopleStore = tx.objectStore('people');
+        const animalIndex = peopleStore.index('animal');
+
+        return animalIndex.getAll('dog')
+        // return animalIndex.getAll();
+        // return peopleStore.getAll();
+    });
+
+    dbPromise.then(db => {
+        const tx = db.transaction('people');
+        const peopleStore = tx.objectStore('people');
+        const ageIndex = peopleStore.index('age');
+
+        return ageIndex.openCursor();
+    }).then((cursor) => {
+        if (!cursor) return;
+        // Skip first two
+        return cursor.advance(2);
+    }).then(function logPerson(cursor) {
+        if (!cursor) return;
+        // loop each one get value out ot it
+        // console.log("Cursor at: ", cursor.value.name);
+        // continue looping
+        return cursor.continue().then(logPerson);
+    });
+
+    dbPromise.then((db) => {
+        const tx = db.transaction('keyval');
+        const keyvalStore = tx.objectStore('keyval');
+        return keyvalStore.get('key');
+    });
+
+    dbPromise.then(db => {
+        const tx = db.transaction('keyval', 'readwrite');
+        const keyvalStore = tx.objectStore('keyval');
+        keyvalStore.put('barValue', 'fooKey');
+        return tx.complete;
+    });
+
+
+    DBPromise = openIDB();
+
+    function openIDB() {
+        return idb.open('restaurant-app', 2, db => {
+            switch(db.oldVersion) {
+                case 0: {
+                    // Create table 'restaurants', primary key is id
+                    const store = db.createObjectStore('restaurants', {
+                        keyPath: 'id'
+                    });
+                    // if index is needed, put down below
+                    store.createIndex('by-name', 'name');
+                }
+
+                case 1: {
+                    db.createObjectStore('cuisines');
+                    db.createObjectStore('neighborhoods');
+                }
+
+            }
+
+        });
+    }
+})();
+
+
 /**
  * photograph no longer return 1.jpg
-     in api returns 1, so format data here
-     also the last one doesn't have, using id to replace
+ in api returns 1, so format data here
+ also the last one doesn't have, using id to replace
  * @param r
  * @returns {{} & any & {photograph: string}}
  */
@@ -32,6 +159,10 @@ function formatRestaurantsData(restaurants) {
  */
 class DBHelper { // eslint-disable-line no-unused-vars
 
+    constructor() {
+        this.restaurants = [];
+    }
+
     /**
      * Database URL.
      * Change this to restaurants.json file location on your server.
@@ -41,14 +172,48 @@ class DBHelper { // eslint-disable-line no-unused-vars
         return `http://localhost:${port}/restaurants`;
     }
 
+    static setLocalData(restaurants) {
+        this.restaurants = restaurants
+    }
+
+    static fetchRestaurantsFromCache(callback) {
+        return DBPromise.then((db) => {
+            // only fetch from db once
+            if (!db || (this.restaurants && this.restaurants.length)) {
+                return;
+            }
+
+            const tx = db.transaction('restaurants');
+            const store = tx.objectStore('restaurants').index('by-name');
+            return store.getAll()
+                .then((data) => callback(null, data))
+                .catch(err => callback(err, null));
+        });
+    }
+
     /**
      * Fetch all restaurants.
      */
     static fetchRestaurants(callback) {
+
+        if (this.restaurants && this.restaurants.length) {
+            return this.restaurants;
+        }
+
         fetch(DBHelper.DATABASE_URL)
             .then(res => res.json())
             .then(formatRestaurantsData)
+            .then((data) => {
+                DBPromise.then(db => {
+                    const tx = db.transaction('restaurants', 'readwrite');
+                    const store = tx.objectStore('restaurants');
+                    data && data.forEach(d => store.put(d));
+                    return tx.complete;
+                });
+                return data;
+            })
             .then(restaurants => callback(null, restaurants))
+            .then((restaurants) => DBHelper.setLocalData(restaurants))
             .catch(error => callback(error, null));
     }
 
@@ -136,9 +301,18 @@ class DBHelper { // eslint-disable-line no-unused-vars
                 callback(error, null);
             } else {
                 // Get all neighborhoods from all restaurants
-                const neighborhoods = restaurants.map((v, i) => restaurants[i].neighborhood)
+                const neighborhoods = restaurants.map((v, i) => restaurants[i].neighborhood);
                 // Remove duplicates from neighborhoods
-                const uniqueNeighborhoods = neighborhoods.filter((v, i) => neighborhoods.indexOf(v) == i)
+                const uniqueNeighborhoods = neighborhoods.filter((v, i) => neighborhoods.indexOf(v) == i);
+
+                DBPromise.then(db => {
+                    const tx = db.transaction('neighborhoods', 'readwrite');
+                    const store = tx.objectStore('neighborhoods');
+
+                    uniqueNeighborhoods && uniqueNeighborhoods.forEach((d, i) => store.put(d, i));
+
+                });
+
                 callback(null, uniqueNeighborhoods);
             }
         });
@@ -154,9 +328,16 @@ class DBHelper { // eslint-disable-line no-unused-vars
                 callback(error, null);
             } else {
                 // Get all cuisines from all restaurants
-                const cuisines = restaurants.map((v, i) => restaurants[i].cuisine_type)
+                const cuisines = restaurants.map((v, i) => restaurants[i].cuisine_type);
                 // Remove duplicates from cuisines
-                const uniqueCuisines = cuisines.filter((v, i) => cuisines.indexOf(v) == i)
+                const uniqueCuisines = cuisines.filter((v, i) => cuisines.indexOf(v) == i);
+
+                DBPromise.then(db => {
+                    const tx = db.transaction('cuisines', 'readwrite');
+                    const store = tx.objectStore('cuisines');
+
+                    uniqueCuisines && uniqueCuisines.forEach((d, i) => store.put(d, i));
+                });
                 callback(null, uniqueCuisines);
             }
         });

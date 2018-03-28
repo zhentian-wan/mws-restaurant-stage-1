@@ -4,7 +4,7 @@
             // Register a service worker hosted at the root of the
             // site using the default scope.
             navigator.serviceWorker.register('/sw.js').then(function (registration) {
-                console.log('Service worker registration succeeded:', registration);
+                console.log('Service worker registration succeeded', registration);
             }).catch(function (error) {
                 console.log('Service worker registration failed:', error);
             });
@@ -24,24 +24,31 @@ let markers = []; // eslint-disable-line no-unused-vars
  * Fetch neighborhoods and cuisines as soon as the page is loaded.
  */
 document.addEventListener('DOMContentLoaded', () => {
-    fetchNeighborhoods();
-    fetchCuisines();
 
-    console.log("document.activeElement", document.activeElement);
+    DBHelper.fetchRestaurantsFromCache(handleNeighborhoods)
+        .then(() => {
+            fetchNeighborhoods();
+        });
+    DBHelper.fetchRestaurantsFromCache(handleCuisines)
+        .then(() => {
+            fetchCuisines();
+        });
 });
 
 /**
  * Fetch all neighborhoods and set their HTML.
  */
 const fetchNeighborhoods = () => {
-    DBHelper.fetchNeighborhoods((error, neighborhoods) => {
-        if (error) { // Got an error
-            console.error(error);
-        } else {
-            self.neighborhoods = neighborhoods;
-            fillNeighborhoodsHTML();
-        }
-    });
+    DBHelper.fetchNeighborhoods(handleNeighborhoods);
+};
+
+const handleNeighborhoods = (error, neighborhoods) => {
+    if (error) { // Got an error
+        console.error(error);
+    } else {
+        self.neighborhoods = neighborhoods;
+        fillNeighborhoodsHTML();
+    }
 };
 
 /**
@@ -62,14 +69,16 @@ const fillNeighborhoodsHTML = (neighborhoods = self.neighborhoods) => {
  * Fetch all cuisines and set their HTML.
  */
 const fetchCuisines = () => {
-    DBHelper.fetchCuisines((error, cuisines) => {
-        if (error) { // Got an error!
-            console.error(error);
-        } else {
-            self.cuisines = cuisines;
-            fillCuisinesHTML();
-        }
-    });
+    DBHelper.fetchCuisines(handleCuisines);
+};
+
+const handleCuisines = (error, cuisines) => {
+    if (error) { // Got an error!
+        console.error(error);
+    } else {
+        self.cuisines = cuisines;
+        fillCuisinesHTML();
+    }
 };
 
 /**
@@ -100,7 +109,19 @@ window.initMap = () => {
         scrollwheel: false,
         keyboardShortcuts: false
     });
-    updateRestaurants();
+
+    DBHelper.fetchRestaurantsFromCache(handlerCuisineAndNeighborhod).then(() => {
+        updateRestaurants();
+    });
+};
+
+const handlerCuisineAndNeighborhod = (error, restaurants) => {
+    if (error) { // Got an error!
+        console.error(error);
+    } else {
+        resetRestaurants(restaurants);
+        fillRestaurantsHTML();
+    }
 };
 
 /**
@@ -116,14 +137,7 @@ const updateRestaurants = () => {
     const cuisine = cSelect[cIndex].value;
     const neighborhood = nSelect[nIndex].value;
 
-    DBHelper.fetchRestaurantByCuisineAndNeighborhood(cuisine, neighborhood, (error, restaurants) => {
-        if (error) { // Got an error!
-            console.error(error);
-        } else {
-            resetRestaurants(restaurants);
-            fillRestaurantsHTML();
-        }
-    })
+    DBHelper.fetchRestaurantByCuisineAndNeighborhood(cuisine, neighborhood, handlerCuisineAndNeighborhod);
 };
 
 /**

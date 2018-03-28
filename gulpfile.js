@@ -31,9 +31,9 @@ gulp.task('clean', function (callback) {
     return del([gConfig.build.dir], {force: true}, callback);
 });
 
-gulp.task('copy-start', ['styles', 'copy-html', 'copy-imgs', 'scripts:main', 'scripts:restaurant', 'scripts-sw']);
+gulp.task('copy-start', ['styles', 'copy-html', 'copy-imgs', 'libs', 'scripts:main', 'scripts:restaurant', 'scripts-sw']);
 
-gulp.task('copy-build', ['styles', 'copy-html', 'copy-imgs', 'scripts-dist:main', 'scripts-dist:restaurant', 'scripts-sw']);
+gulp.task('copy-build', ['styles', 'copy-html', 'copy-imgs', 'libs', 'scripts-dist:main', 'scripts-dist:restaurant', 'scripts-sw']);
 
 gulp.task('styles', function () {
     gulp.src(gConfig.app_file.scss_src)
@@ -113,6 +113,11 @@ gulp.task('scripts-dist:restaurant', function () {
 gulp.task('scripts-sw', function () {
     gulp.src(gConfig.app_file.sw_src)
         .pipe(gulp.dest(gConfig.build.dir));
+});
+
+gulp.task('libs', function () {
+    gulp.src(gConfig.app_file.libs)
+        .pipe(gulp.dest(gConfig.build.build_libs));
 });
 
 gulp.task('copy-html', function () {

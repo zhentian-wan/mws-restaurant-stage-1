@@ -1,4 +1,4 @@
-const CACHE_VERSION = "restaurant_app_v19";
+const CACHE_VERSION = "restaurant_app_v23";
 
 self.addEventListener("install", event => {
   const urlsToCache = [
@@ -8,17 +8,16 @@ self.addEventListener("install", event => {
     "offline.html",
     "js/main.js",
     "js/restaurant_info.js",
+    "libs/idb.js",
     "css/over640.css",
     "css/over1024.css",
-    "css/styles.css",
-    "https://necolas.github.io/normalize.css/8.0.0/normalize.css"
+    "css/styles.css"
   ];
 
   event.waitUntil(
     caches
       .open(CACHE_VERSION)
       .then(cache => {
-        console.log("cache all");
         return cache.addAll(urlsToCache);
       })
       .catch(() => {
@@ -34,11 +33,7 @@ self.addEventListener("fetch", function(event) {
             if (response) {
                 return response;
             } else {
-                return fetch(event.request)
-                    .catch(() => {
-                        // If cannot fetch
-                        return caches.match('./offline.html');
-                    });
+                return fetch(event.request);
             }
         })
     );

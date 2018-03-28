@@ -213,10 +213,140 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+var DBPromise = void 0;
+
+(function () {
+    var dbPromise = idb.open('restuarant_app_db', 4, function (db) {
+        switch (db.oldVersion) {
+            case 0:
+                {
+                    var keyvalStore = db.createObjectStore('keyval');
+                    keyvalStore.put("value is value", "key");
+                }
+
+            // name is the primary key
+            case 1:
+                {
+                    db.createObjectStore('people', { keyPath: 'name' });
+                }
+
+            // create index 'favoriteAnimal'
+            case 2:
+                {
+                    var peopleStore = db.transaction.objectStore('people');
+                    peopleStore.createIndex('animal', 'favoriteAnimal'); // named index as 'animal'
+                }
+
+            case 3:
+                {
+                    var _peopleStore = db.transaction.objectStore('people');
+                    _peopleStore.createIndex('age', 'age');
+                }
+
+        }
+    });
+
+    dbPromise.then(function (db) {
+        var tx = db.transaction('people', 'readwrite');
+        var peopleStore = tx.objectStore('people');
+        peopleStore.put({
+            name: 'Sam Munoz',
+            age: 25,
+            favoriteAnimal: 'dog'
+        });
+
+        peopleStore.put({
+            name: 'Wam ok',
+            age: 34,
+            favoriteAnimal: 'cat'
+        });
+
+        peopleStore.put({
+            name: 'Kim Bad',
+            age: 35,
+            favoriteAnimal: 'dog'
+        });
+
+        peopleStore.put({
+            name: 'Jam Good',
+            age: 21,
+            favoriteAnimal: 'dog'
+        });
+
+        return tx.complete;
+    });
+
+    dbPromise.then(function (db) {
+        var tx = db.transaction('people');
+        var peopleStore = tx.objectStore('people');
+        var animalIndex = peopleStore.index('animal');
+
+        return animalIndex.getAll('dog');
+        // return animalIndex.getAll();
+        // return peopleStore.getAll();
+    });
+
+    dbPromise.then(function (db) {
+        var tx = db.transaction('people');
+        var peopleStore = tx.objectStore('people');
+        var ageIndex = peopleStore.index('age');
+
+        return ageIndex.openCursor();
+    }).then(function (cursor) {
+        if (!cursor) return;
+        // Skip first two
+        return cursor.advance(2);
+    }).then(function logPerson(cursor) {
+        if (!cursor) return;
+        // loop each one get value out ot it
+        // console.log("Cursor at: ", cursor.value.name);
+        // continue looping
+        return cursor.continue().then(logPerson);
+    });
+
+    dbPromise.then(function (db) {
+        var tx = db.transaction('keyval');
+        var keyvalStore = tx.objectStore('keyval');
+        return keyvalStore.get('key');
+    });
+
+    dbPromise.then(function (db) {
+        var tx = db.transaction('keyval', 'readwrite');
+        var keyvalStore = tx.objectStore('keyval');
+        keyvalStore.put('barValue', 'fooKey');
+        return tx.complete;
+    });
+
+    DBPromise = openIDB();
+
+    function openIDB() {
+        return idb.open('restaurant-app', 2, function (db) {
+            switch (db.oldVersion) {
+                case 0:
+                    {
+                        // Create table 'restaurants', primary key is id
+                        var store = db.createObjectStore('restaurants', {
+                            keyPath: 'id'
+                        });
+                        // if index is needed, put down below
+                        store.createIndex('by-name', 'name');
+                    }
+
+                case 1:
+                    {
+                        db.createObjectStore('cuisines');
+                        db.createObjectStore('neighborhoods');
+                    }
+
+            }
+        });
+    }
+})();
+
 /**
  * photograph no longer return 1.jpg
-     in api returns 1, so format data here
-     also the last one doesn't have, using id to replace
+ in api returns 1, so format data here
+ also the last one doesn't have, using id to replace
  * @param r
  * @returns {{} & any & {photograph: string}}
  */
@@ -239,22 +369,74 @@ function formatRestaurantsData(restaurants) {
  */
 
 var DBHelper = function () {
+    // eslint-disable-line no-unused-vars
+
     function DBHelper() {
         _classCallCheck(this, DBHelper);
+
+        this.restaurants = [];
     }
 
-    _createClass(DBHelper, null, [{
-        key: 'fetchRestaurants',
+    /**
+     * Database URL.
+     * Change this to restaurants.json file location on your server.
+     */
 
+
+    _createClass(DBHelper, null, [{
+        key: 'setLocalData',
+        value: function setLocalData(restaurants) {
+            this.restaurants = restaurants;
+        }
+    }, {
+        key: 'fetchRestaurantsFromCache',
+        value: function fetchRestaurantsFromCache(callback) {
+            var _this = this;
+
+            return DBPromise.then(function (db) {
+                // only fetch from db once
+                if (!db || _this.restaurants && _this.restaurants.length) {
+                    return;
+                }
+
+                var tx = db.transaction('restaurants');
+                var store = tx.objectStore('restaurants').index('by-name');
+                return store.getAll().then(function (data) {
+                    return callback(null, data);
+                }).catch(function (err) {
+                    return callback(err, null);
+                });
+            });
+        }
 
         /**
          * Fetch all restaurants.
          */
+
+    }, {
+        key: 'fetchRestaurants',
         value: function fetchRestaurants(callback) {
+
+            if (this.restaurants && this.restaurants.length) {
+                return this.restaurants;
+            }
+
             fetch(DBHelper.DATABASE_URL).then(function (res) {
                 return res.json();
-            }).then(formatRestaurantsData).then(function (restaurants) {
+            }).then(formatRestaurantsData).then(function (data) {
+                DBPromise.then(function (db) {
+                    var tx = db.transaction('restaurants', 'readwrite');
+                    var store = tx.objectStore('restaurants');
+                    data && data.forEach(function (d) {
+                        return store.put(d);
+                    });
+                    return tx.complete;
+                });
+                return data;
+            }).then(function (restaurants) {
                 return callback(null, restaurants);
+            }).then(function (restaurants) {
+                return DBHelper.setLocalData(restaurants);
             }).catch(function (error) {
                 return callback(error, null);
             });
@@ -375,6 +557,16 @@ var DBHelper = function () {
                     var uniqueNeighborhoods = neighborhoods.filter(function (v, i) {
                         return neighborhoods.indexOf(v) == i;
                     });
+
+                    DBPromise.then(function (db) {
+                        var tx = db.transaction('neighborhoods', 'readwrite');
+                        var store = tx.objectStore('neighborhoods');
+
+                        uniqueNeighborhoods && uniqueNeighborhoods.forEach(function (d, i) {
+                            return store.put(d, i);
+                        });
+                    });
+
                     callback(null, uniqueNeighborhoods);
                 }
             });
@@ -399,6 +591,15 @@ var DBHelper = function () {
                     // Remove duplicates from cuisines
                     var uniqueCuisines = cuisines.filter(function (v, i) {
                         return cuisines.indexOf(v) == i;
+                    });
+
+                    DBPromise.then(function (db) {
+                        var tx = db.transaction('cuisines', 'readwrite');
+                        var store = tx.objectStore('cuisines');
+
+                        uniqueCuisines && uniqueCuisines.forEach(function (d, i) {
+                            return store.put(d, i);
+                        });
                     });
                     callback(null, uniqueCuisines);
                 }
@@ -463,12 +664,6 @@ var DBHelper = function () {
         }
     }, {
         key: 'DATABASE_URL',
-        // eslint-disable-line no-unused-vars
-
-        /**
-         * Database URL.
-         * Change this to restaurants.json file location on your server.
-         */
         get: function get() {
             var port = 1337; // Change this to your server port
             return 'http://localhost:' + port + '/restaurants';

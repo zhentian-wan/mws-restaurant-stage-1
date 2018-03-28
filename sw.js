@@ -1,4 +1,4 @@
-const CACHE_VERSION = "restaurant_app_v19";
+const CACHE_VERSION = "restaurant_app_v21";
 
 self.addEventListener("install", event => {
   const urlsToCache = [
@@ -8,6 +8,7 @@ self.addEventListener("install", event => {
     "offline.html",
     "js/main.js",
     "js/restaurant_info.js",
+    "libs/idb.js",
     "css/over640.css",
     "css/over1024.css",
     "css/styles.css",
@@ -36,8 +37,9 @@ self.addEventListener("fetch", function(event) {
             } else {
                 return fetch(event.request)
                     .catch(() => {
+                        console.log("error, cannot fetch", event.request);
                         // If cannot fetch
-                        return caches.match('./offline.html');
+                       // return caches.match('./offline.html');
                     });
             }
         })

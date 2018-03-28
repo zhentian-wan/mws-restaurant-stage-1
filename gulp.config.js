@@ -1,13 +1,16 @@
 module.exports = {
     app_file: {
         js_main_src: [
+            './js/idb.js',
             './js/main.js',
             './js/dbhelper.js'
         ],
         js_restaurant_src: [
             './js/restaurant_info.js',
-            './js/dbhelper.js'
+            './js/dbhelper.js',
+            './js/idb.js'
         ],
+        libs: './libs/**/*.js',
         scss_src: './scss/**/*.scss',
         index_src: './img_src',
         html_src: './*.html',
@@ -21,5 +24,6 @@ module.exports = {
         build_img: './dist/img',
         build_js: './dist/js',
         build_data: './dist/data',
+        build_libs: './dist/libs',
     },
 };

@@ -10,6 +10,7 @@ module.exports = {
     "globals": {
         "google": true,
         "DBHelper": true,
+        "idb": true
     },
     "rules": {
         "no-console": 0,
