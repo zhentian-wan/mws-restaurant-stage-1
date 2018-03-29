@@ -10,14 +10,12 @@
   "scripts": {
     "start": "gulp",
     "serve": "cd dist && ../node_modules/.bin/http-serve -p 3000",
-    "build": "cross-env gulp build && cd dist && ../node_modules/.bin/http-serve -p 8000",
+    "build": "gulp build",
     "images": "grunt"
   },
   "devDependencies": {
     "babel-core": "^6.26.0",
     "babel-preset-env": "^1.6.1",
-    "browser-sync": "^2.23.6",
-    "cross-env": "^5.1.4",
     "del": "^3.0.0",
     "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
@@ -34,6 +32,7 @@
     "gulp-sass": "^3.1.0",
     "gulp-shell": "^0.6.5",
     "gulp-sourcemaps": "^2.6.4",
+    "gulp-strip-comments": "^2.5.2",
     "gulp-uglify": "^3.0.0",
     "gulp-util": "^3.0.8",
     "http-serve": "^1.0.1",

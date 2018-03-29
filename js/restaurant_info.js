@@ -21,21 +21,34 @@ let map; // eslint-disable-line no-unused-vars
  * Initialize Google map, called from HTML.
  */
 window.initMap = () => {
-    fetchRestaurantFromURL((error, restaurant) => {
-        if (error) {
-            // Got an error!
-            console.error(error);
-        } else {
-            self.map = new google.maps.Map(document.getElementById("map"), {
-                zoom: 16,
-                center: restaurant.latlng,
-                scrollwheel: false
-            });
-            fillBreadcrumb();
-            DBHelper.mapMarkerForRestaurant(self.restaurant, self.map);
-        }
-    });
+    fetchRestaurantFromURL(handleFetchRestaurantFromURL);
 };
+
+const handleFecthRestaurant = (callback) => (error, restaurant) => {
+    console.log("handleFecthRestaurant", restaurant)
+    self.restaurant = restaurant;
+    if (!restaurant) {
+        console.error(error);
+        return;
+    }
+    fillRestaurantHTML();
+    callback(null, restaurant);
+};
+
+function handleFetchRestaurantFromURL(error, restaurant) {
+    if (error) {
+        // Got an error!
+        console.error(error);
+    } else {
+        self.map = new google.maps.Map(document.getElementById("map"), {
+            zoom: 16,
+            center: restaurant.latlng,
+            scrollwheel: false
+        });
+        fillBreadcrumb(restaurant);
+        DBHelper.mapMarkerForRestaurant(restaurant, self.map);
+    }
+}
 
 /**
  * Get current restaurant from page URL.
@@ -52,15 +65,7 @@ const fetchRestaurantFromURL = callback => {
         const error = "No restaurant id in URL";
         callback(error, null);
     } else {
-        DBHelper.fetchRestaurantById(id, (error, restaurant) => {
-            self.restaurant = restaurant;
-            if (!restaurant) {
-                console.error(error);
-                return;
-            }
-            fillRestaurantHTML();
-            callback(null, restaurant);
-        });
+        DBHelper.fetchRestaurantById(id, handleFecthRestaurant(callback));
     }
 };
 

@@ -1,18 +1,19 @@
-const CACHE_VERSION = "restaurant_app_v21";
+const CACHE_VERSION = "restaurant_app_v27";
 
 self.addEventListener("install", event => {
   const urlsToCache = [
     "/",
+    "icon.png",
     "index.html",
     "restaurant.html",
     "offline.html",
-    "js/main.js",
-    "js/restaurant_info.js",
-    "libs/idb.js",
-    "css/over640.css",
-    "css/over1024.css",
-    "css/styles.css",
-    "https://necolas.github.io/normalize.css/8.0.0/normalize.css"
+    "dist/js/main.js",
+    "dist/js/restaurant_info.js",
+    "dist/libs/vender.js",
+    "dist/css/over640.css",
+    "dist/css/over1024.css",
+    "dist/css/styles.css",
+    "dist/css/normalize.css"
   ];
 
   event.waitUntil(
@@ -29,21 +30,24 @@ self.addEventListener("install", event => {
 });
 
 self.addEventListener("fetch", function(event) {
-    event.respondWith(
-        // Fetch the static assets
-        caches.match(event.request).then(response => {
-            if (response) {
-                return response;
-            } else {
-                return fetch(event.request)
-                    .catch(() => {
-                        console.log("error, cannot fetch", event.request);
-                        // If cannot fetch
-                       // return caches.match('./offline.html');
-                    });
-            }
-        })
-    );
+  const requestUrl = new URL(event.request.url);
+  if (requestUrl.origin === location.origin) {
+    /*if (requestUrl.pathname === "/") {
+      console.log("fetch skelton");
+      event.respondWith(caches.match("/skelton"));
+    }*/
+
+  }
+
+  event.respondWith(
+    // Fetch the static assets
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request)
+        .catch((err) => {
+          console.log(err)
+      });
+    })
+  );
 });
 
 self.addEventListener("activate", event => {

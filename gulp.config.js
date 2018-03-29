@@ -1,14 +1,12 @@
 module.exports = {
     app_file: {
         js_main_src: [
-            './js/idb.js',
             './js/main.js',
             './js/dbhelper.js'
         ],
         js_restaurant_src: [
             './js/restaurant_info.js',
-            './js/dbhelper.js',
-            './js/idb.js'
+            './js/dbhelper.js'
         ],
         libs: './libs/**/*.js',
         scss_src: './scss/**/*.scss',

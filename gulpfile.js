@@ -31,9 +31,9 @@ gulp.task('clean', function (callback) {
     return del([gConfig.build.dir], {force: true}, callback);
 });
 
-gulp.task('copy-start', ['styles', 'copy-html', 'copy-imgs', 'libs', 'scripts:main', 'scripts:restaurant', 'scripts-sw']);
+gulp.task('copy-start', ['styles', 'libs', 'imgs', 'scripts:main', 'scripts:restaurant']);
 
-gulp.task('copy-build', ['styles', 'copy-html', 'copy-imgs', 'libs', 'scripts-dist:main', 'scripts-dist:restaurant', 'scripts-sw']);
+gulp.task('copy-build', ['styles', 'libs', 'imgs', 'scripts-dist:main', 'scripts-dist:restaurant']);
 
 gulp.task('styles', function () {
     gulp.src(gConfig.app_file.scss_src)
@@ -43,24 +43,13 @@ gulp.task('styles', function () {
             cascade: false
         }))
         .pipe(minifyCss())
-        .pipe(sourcemaps.write())
         .pipe(gulp.dest(gConfig.build.build_css));
 });
 
 gulp.task('lint', () => {
-    // ESLint ignores files with "node_modules" paths.
-    // So, it's best to have gulp ignore the directory as well.
-    // Also, Be sure to return the stream from the task;
-    // Otherwise, the task may end before the stream has finished.
     return gulp.src(['**/*.js', '!node_modules/**'])
-    // eslint() attaches the lint output to the "eslint" property
-    // of the file object so it can be used by other modules.
         .pipe(eslint())
-        // eslint.format() outputs the lint results to the console.
-        // Alternatively use eslint.formatEach() (see Docs).
         .pipe(eslint.format())
-        // To have the process exit with an error code (1) on
-        // lint error, return the stream and pipe to failAfterError last.
         .pipe(eslint.failAfterError());
 });
 
@@ -110,29 +99,19 @@ gulp.task('scripts-dist:restaurant', function () {
         .pipe(gulp.dest(gConfig.build.build_js))
 });
 
-gulp.task('scripts-sw', function () {
-    gulp.src(gConfig.app_file.sw_src)
-        .pipe(gulp.dest(gConfig.build.dir));
-});
-
 gulp.task('libs', function () {
     gulp.src(gConfig.app_file.libs)
+        .pipe(plumber())
+        .pipe(concat('vender.js'))
+        .pipe(uglify())
         .pipe(gulp.dest(gConfig.build.build_libs));
 });
 
-gulp.task('copy-html', function () {
-    gulp.src(gConfig.app_file.html_src)
-        .pipe(gulp.dest(gConfig.build.build_html));
-});
-
-gulp.task('copy-imgs', shell.task('grunt'));
-
+gulp.task('imgs', shell.task('grunt'));
 
 gulp.task('watch', function () {
+    gulp.watch(gConfig.app_file.img_src, ['imgs']);
     gulp.watch(gConfig.app_file.scss_src, ['styles']);
-    gulp.watch(gConfig.app_file.sw_src, ['scripts-sw']);
     gulp.watch(gConfig.app_file.js_main_src, ['scripts:main']);
     gulp.watch(gConfig.app_file.js_restaurant_src, ['scripts:restaurant']);
-    gulp.watch(gConfig.app_file.html_src, ['copy-html']);
-    gulp.watch(gConfig.app_file.img_src, ['copy-imgs']);
 });
