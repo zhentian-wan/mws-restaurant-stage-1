@@ -155,6 +155,8 @@ class DBHelper {   // eslint-disable-line no-unused-vars
 
   constructor() {
     this.restaurants = [];
+    this.neighborhoods = [];
+    this.cuisines = [];
     this.details = {};
   }
 
@@ -180,6 +182,38 @@ class DBHelper {   // eslint-disable-line no-unused-vars
 
       const tx = db.transaction("restaurants");
       const store = tx.objectStore("restaurants").index("by-name");
+      return store
+        .getAll()
+        .then(data => callback(null, data))
+        .catch(err => callback(err, null));
+    });
+  }
+
+  static fetchNeighborhoodsFromCache(callback) {
+    return DBPromise.then(db => {
+      // only fetch from db once
+      if (!db || (this.resneighborhoodstaurants && this.neighborhoods.length)) {
+        return;
+      }
+
+      const tx = db.transaction("neighborhoods");
+      const store = tx.objectStore("neighborhoods");
+      return store
+        .getAll()
+        .then(data => callback(null, data))
+        .catch(err => callback(err, null));
+    });
+  }
+
+  static fetchCuisinesFromCache(callback) {
+    return DBPromise.then(db => {
+      // only fetch from db once
+      if (!db || (this.cuisines && this.cuisines.length)) {
+        return;
+      }
+
+      const tx = db.transaction("cuisines");
+      const store = tx.objectStore("cuisines");
       return store
         .getAll()
         .then(data => callback(null, data))
@@ -279,6 +313,7 @@ class DBHelper {   // eslint-disable-line no-unused-vars
    * Fetch restaurants by a neighborhood with proper error handling.
    */
   static fetchRestaurantByNeighborhood(neighborhood, callback) {
+
     // Fetch all restaurants
     DBHelper.fetchRestaurants((error, restaurants) => {
       if (error) {
@@ -324,6 +359,7 @@ class DBHelper {   // eslint-disable-line no-unused-vars
   static fetchNeighborhoods(callback) {
     // Fetch all restaurants
     DBHelper.fetchRestaurants((error, restaurants) => {
+
       if (error) {
         callback(error, null);
       } else {
@@ -343,7 +379,6 @@ class DBHelper {   // eslint-disable-line no-unused-vars
           uniqueNeighborhoods &&
             uniqueNeighborhoods.forEach((d, i) => store.put(d, i));
         });
-
         callback(null, uniqueNeighborhoods);
       }
     });

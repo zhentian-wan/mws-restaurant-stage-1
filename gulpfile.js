@@ -10,6 +10,7 @@ const eslint = require('gulp-eslint');
 const plumber = require('gulp-plumber');
 const uglify = require('gulp-uglify');
 const babel = require('gulp-babel');
+const htmlmin = require('gulp-htmlmin');
 const shell = require('gulp-shell');
 const gConfig = require('./gulp.config.js');
 
@@ -20,10 +21,6 @@ gulp.task('default', function (callback) {
 });
 
 gulp.task('start', function (callback) {
-    runSequence('clean', 'copy-start', callback); //run clean first, then copy-build
-});
-
-gulp.task('build', function (callback) {
     runSequence('clean', 'copy-build', callback); //run clean first, then copy-build
 });
 
@@ -31,9 +28,13 @@ gulp.task('clean', function (callback) {
     return del([gConfig.build.dir], {force: true}, callback);
 });
 
-gulp.task('copy-start', ['styles', 'libs', 'imgs', 'scripts:main', 'scripts:restaurant']);
+gulp.task('copy-build', ['html', 'styles', 'sw', 'libs', 'imgs', 'scripts:main', 'scripts:restaurant']);
 
-gulp.task('copy-build', ['styles', 'libs', 'imgs', 'scripts-dist:main', 'scripts-dist:restaurant']);
+gulp.task('html', function () {
+    gulp.src(gConfig.app_file.html_src)
+    .pipe(htmlmin({collapseWhitespace: true}))
+    .pipe(gulp.dest('dist'));
+});
 
 gulp.task('styles', function () {
     gulp.src(gConfig.app_file.scss_src)
@@ -53,27 +54,8 @@ gulp.task('lint', () => {
         .pipe(eslint.failAfterError());
 });
 
+
 gulp.task('scripts:main', function () {
-    gulp.src(gConfig.app_file.js_main_src)
-        .pipe(plumber())
-        .pipe(babel({
-            presets: ['env']
-        }))
-        .pipe(concat('main.js'))
-        .pipe(gulp.dest(gConfig.build.build_js))
-});
-
-gulp.task('scripts:restaurant', function () {
-    gulp.src(gConfig.app_file.js_restaurant_src)
-        .pipe(plumber())
-        .pipe(babel({
-            presets: ['env']
-        }))
-        .pipe(concat('restaurant_info.js'))
-        .pipe(gulp.dest(gConfig.build.build_js))
-});
-
-gulp.task('scripts-dist:main', function () {
     gulp.src(gConfig.app_file.js_main_src)
         .pipe(plumber())
         .pipe(sourcemaps.init())
@@ -86,7 +68,7 @@ gulp.task('scripts-dist:main', function () {
         .pipe(gulp.dest(gConfig.build.build_js));
 });
 
-gulp.task('scripts-dist:restaurant', function () {
+gulp.task('scripts:restaurant', function () {
     gulp.src(gConfig.app_file.js_restaurant_src)
         .pipe(plumber())
         .pipe(sourcemaps.init())
@@ -107,10 +89,17 @@ gulp.task('libs', function () {
         .pipe(gulp.dest(gConfig.build.build_libs));
 });
 
+gulp.task('sw', function () {
+    gulp.src(gConfig.app_file.sw_src)
+        .pipe(gulp.dest(gConfig.build.dir));
+});
+
 gulp.task('imgs', shell.task('grunt'));
 
 gulp.task('watch', function () {
     gulp.watch(gConfig.app_file.img_src, ['imgs']);
+    gulp.watch(gConfig.app_file.html_src, ['html']);
+    gulp.watch(gConfig.app_file.sw_src, ['sw']);
     gulp.watch(gConfig.app_file.scss_src, ['styles']);
     gulp.watch(gConfig.app_file.js_main_src, ['scripts:main']);
     gulp.watch(gConfig.app_file.js_restaurant_src, ['scripts:restaurant']);

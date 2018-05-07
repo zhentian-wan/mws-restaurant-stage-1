@@ -9,8 +9,7 @@
   },
   "scripts": {
     "start": "gulp",
-    "serve": "cd dist && ../node_modules/.bin/http-serve -p 3000",
-    "build": "gulp build",
+    "serve": "../node_modules/.bin/http-serve -p 3000",
     "images": "grunt"
   },
   "devDependencies": {
@@ -26,6 +25,7 @@
     "gulp-babel": "^7.0.1",
     "gulp-concat": "^2.6.1",
     "gulp-eslint": "^4.0.2",
+    "gulp-htmlmin": "^4.0.0",
     "gulp-minify-css": "^1.2.4",
     "gulp-plumber": "^1.2.0",
     "gulp-run-command": "0.0.9",

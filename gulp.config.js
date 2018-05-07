@@ -1,19 +1,23 @@
 module.exports = {
     app_file: {
         js_main_src: [
+            './js/dbhelper.js',
             './js/main.js',
-            './js/dbhelper.js'
         ],
         js_restaurant_src: [
-            './js/restaurant_info.js',
-            './js/dbhelper.js'
+            './js/dbhelper.js',
+            './js/restaurant_info.js'
         ],
         libs: './libs/**/*.js',
         scss_src: './scss/**/*.scss',
         index_src: './img_src',
         html_src: './*.html',
         img_src: './img_src/*.jpg',
-        sw_src: './sw.js',
+        sw_src: [
+            './sw.js',
+            './manifest.json',
+            './icon.png'
+        ],
     },
     build: {
         dir: './dist',
