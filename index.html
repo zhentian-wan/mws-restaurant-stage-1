@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Restaurant App">
+    <meta name="theme-color" content="#303F9F">
+
+    <link rel="icon" href="icon.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="icon.png">
+    <link rel="manifest" href="manifest.json">
+
+    <link rel="preload" href="css/normalize.css" as="style">
+    <link rel="preload" href="css/styles.css" as="style">
+    <link rel="preload" href="js/main.js" as="script">
+    <link rel="preload" href="https://maps.googleapis.com/maps/api/js?key=AIzaSyBI8lev0MDR6MAs2vLpVjzmjgfJfIRAZTE&libraries=places&callback=initMap" as="script">
+
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/over640.css" media="screen and (max-width: 1023px) and (min-width: 640px)">
+    <link rel="stylesheet" href="css/over1024.css" media="screen and (min-width: 1024px)">
+
+    <title>Restaurant Reviews</title>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <h1>
+                <a href="/">Restaurant Reviews</a>
+            </h1>
+        </nav>
+    </header>
+
+    <section id="app-shell-section">
+        <span>
+            loading....
+        </span>
+    </section>
+    <!-- Skip link -->
+    <a href="#list-container" aria-label="Skip map to main content" class="skip-link">Skip map to main content</a>
+    <main id="maincontent">
+        <!-- Map area -->
+        <section id="map-container" aria-label="Google map" role="application">
+            <div id="map" class="hidden" ></div>
+        </section>
+        <section id="list-container" aria-labelledby="filter-options-title" tabindex="-1">
+            <!-- filters -->
+            <div class="filter-options">
+                <h2 id="filter-options-title">Filter Results</h2>
+                <select id="neighborhoods-select" name="neighborhoods" aria-label="filter by neighborhoods" onchange="updateRestaurants()">
+                    <option value="all">All Neighborhoods</option>
+                </select>
+                <select id="cuisines-select" name="cuisines" aria-label="filter by cuisines" onchange="updateRestaurants()">
+                    <option value="all">All Cuisines</option>
+                </select>
+            </div>
+            <!-- restaurants list -->
+            <ul id="restaurants-list" aria-label="All restaurants lists"></ul>
+        </section>
+    </main>
+
+    <script charset="utf-8" src="libs/vender.js"></script>
+    <script charset="utf-8" src="js/main.js"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBI8lev0MDR6MAs2vLpVjzmjgfJfIRAZTE&libraries=places&callback=initMap" rel="noopener"></script>
+
+
+    <footer id="footer">
+        Copyright (c) 2017
+        <a href="/">
+            <strong>Restaurant Reviews</strong>
+        </a> All Rights Reserved.
+    </footer>
+
+</body>
+
+</html>
